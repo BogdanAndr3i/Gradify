@@ -10,13 +10,13 @@ status_bp = Blueprint("status", __name__)
 
 VALID_STATUSES = {"APPROVED", "REJECTED", "NEEDS_CHANGES"}
 
+
 @status_bp.route("/<thesis_id>/sections/<section_id>/versions/<version_id>/status", methods=["PUT"])
 @jwt_required
 @role_required("prof")
 def update_status(thesis_id, section_id, version_id):
     version_ref = _get_version_ref(thesis_id, section_id, version_id)
-    version_doc = version_ref.get()
-    if not version_doc.exists:
+    if not version_ref.get().exists:
         return jsonify({"error": "Versiune negasita"}), 404
 
     body = request.get_json()
@@ -29,17 +29,23 @@ def update_status(thesis_id, section_id, version_id):
         "updatedAt": datetime.utcnow()
     })
 
-    thesis_doc = db.collection("theses").document(thesis_id).get()
-    student_id = thesis_doc.to_dict().get("studentId")
+    section_doc = (
+        db.collection("theses").document(thesis_id)
+        .collection("sections").document(section_id)
+        .get()
+    )
+    section_title = section_doc.to_dict().get("title", "") if section_doc.exists else ""
 
     publisher.publish(
         PUBSUB_TOPIC_STATUS_CHANGED,
         json.dumps({
-            "userId": student_id,
+            "eventType": "status_changed",
             "thesisId": thesis_id,
             "sectionId": section_id,
             "versionId": version_id,
-            "status": new_status
+            "actorId": g.user_id,
+            "sectionTitle": section_title,
+            "status": new_status,
         }).encode("utf-8")
     )
 

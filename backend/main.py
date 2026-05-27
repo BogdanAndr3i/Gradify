@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from firestore_connect import db
-from logger import log_error, log_info
+from logger import log_error, log_info, log_warning
 from blueprints.auth import auth_bp
 from blueprints.thesis import thesis_bp
 from blueprints.sections import sections_bp

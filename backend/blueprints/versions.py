@@ -3,7 +3,7 @@ from firebase_admin import firestore
 from middleware import jwt_required, role_required
 from firestore_connect import db, storage_client, publisher
 from blueprints.sections import detect_type
-from config import BUCKET_NAME, PUBSUB_TOPIC_SECTION_UPLOADED
+from config import BUCKET_NAME, PUBSUB_TOPIC_SECTION_UPLOADED, PUBSUB_TOPIC_STATUS_CHANGED
 import uuid
 import json
 from datetime import datetime
@@ -91,15 +91,30 @@ def upload_version(thesis_id, section_id):
         "hasDiff": False
     })
 
+    section_title = section_data.get("title", "")
+
     publisher.publish(
         PUBSUB_TOPIC_SECTION_UPLOADED,
         json.dumps({
+            "eventType": "section_uploaded",
             "thesisId": thesis_id,
             "sectionId": section_id,
             "versionId": version_id,
             "gcsPath": gcs_path,
-            "type": file_type,
+            "sectionType": file_type,
             "versionNumber": version_number
+        }).encode("utf-8")
+    )
+
+    publisher.publish(
+        PUBSUB_TOPIC_STATUS_CHANGED,
+        json.dumps({
+            "eventType": "section_uploaded",
+            "thesisId": thesis_id,
+            "sectionId": section_id,
+            "versionId": version_id,
+            "actorId": g.user_id,
+            "sectionTitle": section_title,
         }).encode("utf-8")
     )
 
