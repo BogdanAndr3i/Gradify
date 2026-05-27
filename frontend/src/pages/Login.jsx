@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logoGradify from "../assets/logo_gradify.svg";
-import DotGrid from "../components/DotGrid"; 
+import DotGrid from "../components/DotGrid";
 import BorderGlow from "../components/BorderGlow";
-import RotatingText from "../components/RotatingText"; 
+import RotatingText from "../components/RotatingText";
 import "./Login.css";
 
 const GoogleLogo = () => (
@@ -15,31 +15,27 @@ const GoogleLogo = () => (
   </svg>
 );
 
-const TEST_ROLES = [
-  { role: "pending",  label: "⏳ Pending"  },
-  { role: "student",  label: "🎓 Student"  },
-  { role: "prof",     label: "📚 Profesor" },
-  { role: "admin",    label: "🛡️ Admin"    },
-];
-
 export default function Login() {
-  const { login } = useAuth();
-  const navigate  = useNavigate();
+  const { user, login } = useAuth();
 
-  const handleLogin = (role) => {
-    login(role);
-    navigate("/", { replace: true });
+  if (user) return <Navigate to="/dashboard" replace />;
+
+  const handleLogin = async () => {
+    try {
+      await login();
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
   };
 
   return (
     <div className="login-page">
-      
       <div className="login-background">
         <DotGrid
           dotSize={5}
           gap={15}
-          baseColor="#cbd5e1"     
-          activeColor="#1a8cff"   
+          baseColor="#cbd5e1"
+          activeColor="#1a8cff"
           proximity={120}
           shockRadius={250}
           shockStrength={5}
@@ -47,7 +43,6 @@ export default function Login() {
           returnDuration={1.5}
         />
       </div>
-
       <div className="login-glow-wrapper">
         <div className="login-slogan">
           <span>Un singur loc pentru</span>
@@ -67,44 +62,28 @@ export default function Login() {
             loop
           />
         </div>
-
         <BorderGlow
           backgroundColor="#ffffff"
           borderRadius={16}
           glowColor="210 100 60"
           colors={['#1a8cff', '#60a5fa', '#93c5fd']}
-          glowIntensity={1.2} 
-          edgeSensitivity={40} 
+          glowIntensity={1.2}
+          edgeSensitivity={40}
         >
           <div className="login-card">
             <img src={logoGradify} alt="Gradify Logo" className="login-card__logo-img" />
-            
             <p className="login-card__subtitle">
               Autentifică-te cu contul instituțional pentru a continua.
             </p>
-
-            <button className="btn-google" onClick={() => handleLogin("pending")}>
+            <button className="btn-google" onClick={handleLogin}>
               <GoogleLogo />
               Continuă cu Google
             </button>
-
-            <div className="login-card__divider">sau alege un rol pentru testare</div>
-
-            <span className="role-picker__label">Rol de test</span>
-            <div className="role-picker__grid">
-              {TEST_ROLES.map(({ role, label }) => (
-                <button key={role} className="btn-role" onClick={() => handleLogin(role)}>
-                  {label}
-                </button>
-              ))}
-            </div>
-
             <p className="login-card__footer">
               Prin autentificare, ești de acord cu politica de confidențialitate<br />a instituției tale.
             </p>
           </div>
         </BorderGlow>
-        
       </div>
     </div>
   );

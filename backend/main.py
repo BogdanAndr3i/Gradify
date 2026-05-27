@@ -11,6 +11,12 @@ from blueprints.versions import versions_bp
 from blueprints.feedback import feedback_bp
 from blueprints.status import status_bp
 from blueprints.admin import admin_bp
+from flask_cors import CORS
+CORS(app, origins=[
+    "https://gradify-497616.web.app",
+    "https://gradify-497616.firebaseapp.com",
+    "http://localhost:5173"
+])
 
 app = Flask(__name__)
 

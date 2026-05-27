@@ -1,27 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { listaStudentiProfesor } from "../data/mockData";
-import BorderGlow from "../components/BorderGlow"; // <-- 1. Importăm componenta
+import { api } from "../api";
+import BorderGlow from "../components/BorderGlow";
 import "./StudentiPage.css";
 
 export default function StudentiPage() {
+  const [theses, setTheses]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  const filteredStudents = listaStudentiProfesor.filter(student =>
-    student.nume.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.titluLicenta.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    api.get("/api/theses")
+      .then(setTheses)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = theses.filter((t) =>
+    t.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusClass = (status) => {
     switch (status) {
-      case "Aprobat": return "badge-aprobat";
-      case "Așteaptă revizuire": return "badge-asteptare";
-      case "Necesită modificări": return "badge-modificari";
-      case "Lipsă activitate": return "badge-lipsa";
-      default: return "";
+      case "IN_PROGRESS": return "badge-asteptare";
+      case "APPROVED":    return "badge-aprobat";
+      case "REJECTED":    return "badge-modificari";
+      default:            return "";
     }
   };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "IN_PROGRESS": return "În progres";
+      case "APPROVED":    return "Aprobat";
+      case "REJECTED":    return "Respins";
+      default:            return status;
+    }
+  };
+
+  if (loading) return <div className="studenti-container"><p>Se încarcă...</p></div>;
+  if (error)   return <div className="studenti-container"><p style={{color:"red"}}>{error}</p></div>;
 
   return (
     <div className="studenti-container">
@@ -39,40 +60,43 @@ export default function StudentiPage() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+
       <BorderGlow
         backgroundColor="#ffffff"
         borderRadius={12}
         glowColor="210 100 60"
-        colors={['#1a8cff', '#60a5fa', '#93c5fd']} 
+        colors={['#1a8cff', '#60a5fa', '#93c5fd']}
         edgeSensitivity={30}
       >
         <div className="table-wrapper">
           <table className="studenti-table">
             <thead>
               <tr>
-                <th>Nume Student</th>
-                <th>Titlu Licență</th>
-                <th>Status Curent</th>
-                <th>Ultima Modificare</th>
+                <th>Titlu Lucrare</th>
+                <th>Status</th>
+                <th>Creat</th>
                 <th>Acțiuni</th>
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.length > 0 ? (
-                filteredStudents.map((student) => (
-                  <tr key={student.id}>
-                    <td className="fw-600">{student.nume}</td>
-                    <td className="text-muted">{student.titluLicenta}</td>
+              {filtered.length > 0 ? (
+                filtered.map((thesis) => (
+                  <tr key={thesis.id}>
+                    <td className="fw-600">{thesis.title}</td>
                     <td>
-                      <span className={`status-badge ${getStatusClass(student.status)}`}>
-                        {student.status}
+                      <span className={`status-badge ${getStatusClass(thesis.globalStatus)}`}>
+                        {getStatusLabel(thesis.globalStatus)}
                       </span>
                     </td>
-                    <td className="text-muted">{student.ultimaModificare}</td>
+                    <td className="text-muted">
+                      {thesis.createdAt?._seconds
+                        ? new Date(thesis.createdAt._seconds * 1000).toLocaleDateString("ro-RO")
+                        : "—"}
+                    </td>
                     <td>
                       <button
                         className="btn-vezi-detalii"
-                        onClick={() => navigate(`/revizuire`)}
+                        onClick={() => navigate(`/revizuire/${thesis.id}`)}
                       >
                         Vezi detalii
                       </button>
@@ -81,8 +105,10 @@ export default function StudentiPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="empty-state">
-                    Nu am găsit niciun student care să corespundă căutării.
+                  <td colSpan="4" className="empty-state">
+                    {theses.length === 0
+                      ? "Nu ai niciun student alocat momentan."
+                      : "Nu am găsit rezultate pentru căutarea ta."}
                   </td>
                 </tr>
               )}

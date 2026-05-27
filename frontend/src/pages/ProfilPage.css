@@ -1,0 +1,117 @@
+/* ProfilPage.css */
+.profil-container {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.profil-card {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.profil-top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.profil-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a8cff, #002d56);
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+.profil-top__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profil-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.profil-role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1.5px solid;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.profil-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0 20px;
+}
+
+.profil-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.profil-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.profil-info-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  min-width: 110px;
+}
+
+.profil-info-value {
+  font-size: 0.875rem;
+  color: #0f172a;
+  text-align: right;
+}
+
+.profil-empty {
+  color: #cbd5e1;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.profil-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-logout {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.btn-logout:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}

@@ -1,181 +1,233 @@
-import { useState } from "react";
-import BorderGlow from "../components/BorderGlow"; // <-- Importăm componenta
+import { useState, useEffect } from "react";
+import { api } from "../api";
+import BorderGlow from "../components/BorderGlow";
 import "./UploadPage.css";
 
-export const FileTextIcon = ({ size = 24, className = "", color = "currentColor" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+const FileIcon = ({ size = 24, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <line x1="16" y1="13" x2="8" y2="13" />
     <line x1="16" y1="17" x2="8" y2="17" />
-    <polyline points="10 9 9 9 8 9" />
   </svg>
 );
 
-export const ArchiveIcon = ({ size = 24, className = "", color = "currentColor" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <polyline points="21 8 21 21 3 21 3 8" />
-    <rect x="1" y="3" width="22" height="5" />
-    <line x1="10" y1="12" x2="14" y2="12" />
+const PlusIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
 export default function UploadPage() {
-  const [pdfFile, setPdfFile] = useState(null);
-  const [zipFile, setZipFile] = useState(null);
-  
-  const [status, setStatus] = useState("idle");
-  const [progress, setProgress] = useState(0);
+  const [thesis,          setThesis]          = useState(null);
+  const [sections,        setSections]        = useState([]);
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [file,            setFile]            = useState(null);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState(null);
 
-  const handlePdfChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setPdfFile(e.target.files[0]);
-      setStatus("idle"); 
+  // creare secțiune nouă
+  const [creatingNew,   setCreatingNew]   = useState(false);
+  const [newTitle,      setNewTitle]      = useState("");
+  const [savingSection, setSavingSection] = useState(false);
+
+  // upload state
+  const [uploading, setUploading] = useState(false);
+  const [success,   setSuccess]   = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const theses = await api.get("/api/theses");
+        if (!theses.length) { setLoading(false); return; }
+        const th = theses[0];
+        setThesis(th);
+        const secs = await api.get(`/api/theses/${th.id}/sections`);
+        setSections(secs);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+    load();
+  }, []);
 
-  const handleZipChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setZipFile(e.target.files[0]);
-      setStatus("idle");
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!pdfFile || !zipFile) return;
-
-    setStatus("uploading");
-    setProgress(15);
-
-    const interval = setInterval(() => {
-      setProgress((oldProgress) => {
-        if (oldProgress >= 90) {
-          clearInterval(interval);
-          return 90; 
-        }
-        return oldProgress + 25;
+  const handleCreateSection = async () => {
+    if (!newTitle.trim()) return;
+    setSavingSection(true);
+    try {
+      const created = await api.post(`/api/theses/${thesis.id}/sections`, {
+        title: newTitle.trim(),
       });
-    }, 400);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      setProgress(100);
-      setStatus("success");
-      
-      setPdfFile(null);
-      setZipFile(null);
-    }, 2000);
+      const updated = await api.get(`/api/theses/${thesis.id}/sections`);
+      setSections(updated);
+      setSelectedSection(updated.find(s => s.id === created.id) || created);
+      setCreatingNew(false);
+      setNewTitle("");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setSavingSection(false);
+    }
   };
 
-  const isSuccess = status === "success";
-  const isReadyToSubmit = pdfFile && zipFile && status === "idle";
+  const handleUpload = async () => {
+    if (!file || !selectedSection) return;
+    setUploading(true);
+    setSuccess(false);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      await api.upload(
+        `/api/theses/${thesis.id}/sections/${selectedSection.id}/versions/upload`,
+        form
+      );
+      setSuccess(true);
+      setFile(null);
+      // refresh secțiuni (type poate fi actualizat)
+      const updated = await api.get(`/api/theses/${thesis.id}/sections`);
+      setSections(updated);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-  let currentGlowColor = "210 100 60"; 
-  let currentGradientColors = ['#1a8cff', '#60a5fa', '#93c5fd'];
-  let currentIntensity = 1.0;
+  if (loading) return <div className="upload-container"><p>Se încarcă...</p></div>;
+  if (error)   return <div className="upload-container"><p style={{ color: "red" }}>{error}</p></div>;
+  if (!thesis) return (
+    <div className="upload-container">
+      <div className="upload-header">
+        <h1>Încărcare Fișiere</h1>
+        <p>Nu ai nicio lucrare asignată momentan. Contactează profesorul coordonator.</p>
+      </div>
+    </div>
+  );
 
-  if (isReadyToSubmit) {
-    currentIntensity = 1.3;
-  }
-  else if (isSuccess) {
-    currentGlowColor = "160 84 40"; // Nuanță de verde HSL
-    currentGradientColors = ['#10b981', '#34d399', '#6ee7b7'];
-    currentIntensity = 1.2;
-  }
+  const canUpload = selectedSection && file && !uploading;
 
   return (
     <div className="upload-container">
       <div className="upload-header">
-        <h1>Încărcare Materiale Licență</h1>
-        <p>Selectează documentul scris în format PDF și arhiva ZIP conținând codul sursă sau anexele proiectului tău.</p>
+        <h1>Încărcare Fișiere</h1>
+        <p>Lucrare: <strong>{thesis.title}</strong></p>
       </div>
 
+      {/* STEP 1 — Selectează sau creează secțiune */}
       <BorderGlow
         backgroundColor="#ffffff"
         borderRadius={12}
-        glowColor={currentGlowColor}
-        colors={currentGradientColors}
-        glowIntensity={currentIntensity}
+        glowColor="210 100 60"
+        colors={['#1a8cff', '#60a5fa', '#93c5fd']}
+        glowIntensity={0.9}
       >
-        <form onSubmit={handleSubmit} className="upload-form">
-          
-          <div className="upload-slot">
-            <label className="upload-slot__label">Documentul Scris (Format PDF)</label>
-            <div className={`upload-box ${pdfFile ? "has-file" : ""}`}>
-              <input 
-                type="file" 
-                accept=".pdf" 
-                id="pdf-input" 
-                onChange={handlePdfChange} 
-                disabled={status === "uploading"}
-              />
-              <label htmlFor="pdf-input" className="upload-box__content">
-                <FileTextIcon className="upload-box__icon" />
-                <span className="upload-box__text">
-                  {pdfFile ? pdfFile.name : "Alege sau trage fișierul PDF aici"}
-                </span>
-                {pdfFile && (
-                  <span className="upload-box__size">
-                    ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
+        <div className="upload-section-picker">
+          <h3 className="section-picker__title">1. Selectează secțiunea</h3>
+          <div className="section-chips">
+            {sections.map(s => (
+              <button
+                key={s.id}
+                className={`section-chip ${selectedSection?.id === s.id ? "selected" : ""}`}
+                onClick={() => { setSelectedSection(s); setSuccess(false); setFile(null); }}
+              >
+                {s.title}
+                {s.type && s.type !== "pending" && (
+                  <span className="chip-type">{s.type}</span>
                 )}
-              </label>
-            </div>
-          </div>
+              </button>
+            ))}
 
-          <div className="upload-slot">
-            <label className="upload-slot__label">Arhivă Cod Sursă / Anexe (Format ZIP)</label>
-            <div className={`upload-box ${zipFile ? "has-file" : ""}`}>
-              <input 
-                type="file" 
-                accept=".zip,.rar,.7z" 
-                id="zip-input" 
-                onChange={handleZipChange}
-                disabled={status === "uploading"}
-              />
-              <label htmlFor="zip-input" className="upload-box__content">
-                <ArchiveIcon className="upload-box__icon" />
-                <span className="upload-box__text">
-                  {zipFile ? zipFile.name : "Alege sau trage fișierul ZIP aici"}
-                </span>
-                {zipFile && (
-                  <span className="upload-box__size">
-                    ({(zipFile.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                )}
-              </label>
-            </div>
-          </div>
-
-          <div className="upload-actions">
-            
-            {status === "uploading" && (
-              <div className="upload-progress-wrapper">
-                <div className="upload-progress-text">Se încarcă în Google Cloud Storage... {progress}%</div>
-                <div className="upload-progress-bar">
-                  <div className="upload-progress-fill" style={{ width: `${progress}%` }}></div>
-                </div>
+            {!creatingNew ? (
+              <button className="section-chip section-chip--new" onClick={() => setCreatingNew(true)}>
+                <PlusIcon /> Secțiune nouă
+              </button>
+            ) : (
+              <div className="new-section-inline">
+                <input
+                  autoFocus
+                  className="new-section-input"
+                  placeholder="Titlu secțiune (ex: Introducere)"
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") handleCreateSection(); if (e.key === "Escape") { setCreatingNew(false); setNewTitle(""); } }}
+                  disabled={savingSection}
+                />
+                <button
+                  className="btn-confirm-section"
+                  onClick={handleCreateSection}
+                  disabled={!newTitle.trim() || savingSection}
+                >
+                  {savingSection ? "..." : "Confirmă"}
+                </button>
+                <button
+                  className="btn-cancel-section"
+                  onClick={() => { setCreatingNew(false); setNewTitle(""); }}
+                  disabled={savingSection}
+                >
+                  Anulează
+                </button>
               </div>
             )}
-
-            {status === "success" && (
-              <div className="upload-alert upload-alert--success">
-                <strong>🎉 Încărcare reușită!</strong> Documentele au fost salvate securizat și profesorul tău coordonator a fost notificat.
-              </div>
-            )}
-
-            <button 
-              type="submit" 
-              className="btn-submit-upload" 
-              disabled={status === "uploading" || !pdfFile || !zipFile}
-            >
-              {status === "uploading" ? "Se trimite..." : "Trimite spre Revizuire"}
-            </button>
           </div>
-
-        </form>
+        </div>
       </BorderGlow>
+
+      {/* STEP 2 — Upload fișier */}
+      {selectedSection && (
+        <BorderGlow
+          backgroundColor="#ffffff"
+          borderRadius={12}
+          glowColor={success ? "160 84 40" : "210 100 60"}
+          colors={success
+            ? ['#10b981', '#34d399', '#6ee7b7']
+            : ['#1a8cff', '#60a5fa', '#93c5fd']}
+          glowIntensity={canUpload ? 1.3 : 1.0}
+        >
+          <div className="upload-form">
+            <h3 className="section-picker__title">
+              2. Fișier pentru: <em>{selectedSection.title}</em>
+            </h3>
+
+            <div className={`upload-box ${file ? "has-file" : ""}`}>
+              <input
+                type="file"
+                id="file-input"
+                onChange={e => { if (e.target.files?.[0]) { setFile(e.target.files[0]); setSuccess(false); } }}
+                disabled={uploading}
+              />
+              <label htmlFor="file-input" className="upload-box__content">
+                <FileIcon size={32} color={file ? "#1a8cff" : "#94a3b8"} />
+                <span className="upload-box__text">
+                  {file ? file.name : "Alege sau trage fișierul aici"}
+                </span>
+                {file && (
+                  <span className="upload-box__size">
+                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                  </span>
+                )}
+              </label>
+            </div>
+
+            {success && (
+              <div className="upload-alert upload-alert--success">
+                🎉 Fișier încărcat cu succes! Profesorul coordonator a fost notificat.
+              </div>
+            )}
+
+            <div className="upload-actions">
+              <button
+                className="btn-submit-upload"
+                onClick={handleUpload}
+                disabled={!canUpload}
+              >
+                {uploading ? "Se trimite..." : "Trimite spre Revizuire"}
+              </button>
+            </div>
+          </div>
+        </BorderGlow>
+      )}
     </div>
   );
 }

@@ -238,3 +238,15 @@
   font-style: italic;
   margin: 0;
 }
+
+.diff-section {
+  margin-bottom: 16px;
+}
+
+.diff-viewer-wrapper {
+  margin-top: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+}

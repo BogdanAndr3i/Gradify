@@ -42,43 +42,53 @@ const UsersIcon = () => (
   </svg>
 );
 
+const ProfilIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
 const getNavItems = (role) => {
   switch (role) {
     case "student":
       return [
-        { to: "/dashboard", label: "Panou Student", icon: <GridIcon /> },
+        { to: "/dashboard", label: "Panou Student",    icon: <GridIcon /> },
         { to: "/upload",    label: "Upload Materiale", icon: <FileIcon /> },
         { to: "/istoric",   label: "Status & Istoric", icon: <FileIcon /> },
+        { to: "/profil",    label: "Profil",           icon: <ProfilIcon /> },
       ];
     case "prof":
       return [
         { to: "/dashboard", label: "Panou Profesor", icon: <GridIcon /> },
         { to: "/studenti",  label: "Studenți",       icon: <UsersIcon /> },
-        { to: "/revizuire", label: "Revizuire",      icon: <FileIcon /> },
+        { to: "/profil",    label: "Profil",         icon: <ProfilIcon /> },
       ];
     case "admin":
       return [
-        { to: "/dashboard",   label: "Panou Admin",  icon: <GridIcon /> },
-        { to: "/utilizatori", label: "Utilizatori",  icon: <UsersIcon /> },
-        { to: "/licente",     label: "Toate Licențele", icon: <FileIcon /> },
+        { to: "/dashboard",   label: "Panou Admin",      icon: <GridIcon /> },
+        { to: "/utilizatori", label: "Utilizatori",      icon: <UsersIcon /> },
+        { to: "/licente",     label: "Toate Licențele",  icon: <FileIcon /> },
+        { to: "/profil",      label: "Profil",           icon: <ProfilIcon /> },
       ];
     default:
-      return [{ to: "/dashboard", label: "Panou Principal", icon: <GridIcon /> }];
+      return [
+        { to: "/dashboard", label: "Panou Principal", icon: <GridIcon /> },
+        { to: "/profil",    label: "Profil",           icon: <ProfilIcon /> },
+      ];
   }
 };
-/* ─── Mock notifications ──────────────────────────────────────────────────── */
+
 const NOTIFICATIONS = [
   { id: 1, text: "Licența #4821 expiră în 3 zile.", time: "acum 5 min" },
   { id: 2, text: "Utilizator nou înregistrat.",      time: "acum 1 oră" },
   { id: 3, text: "Raportul lunar este disponibil.", time: "ieri" },
 ];
 
-/* ─── Navbar ──────────────────────────────────────────────────────────────── */
 function Navbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef(null);
-  
-  const { user, logout } = useAuth(); 
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -93,11 +103,7 @@ function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar__logo">
-        <img
-          src={logoGradify}
-          alt="Gradify Logo"
-          className="navbar__logo-img"
-        />
+        <img src={logoGradify} alt="Gradify Logo" className="navbar__logo-img" />
       </div>
       <nav className="navbar__actions">
         <div className="notif-wrapper" ref={notifRef}>
@@ -130,17 +136,8 @@ function Navbar() {
           )}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            alignItems: "center",
-            marginLeft: "10px",
-          }}
-        >
-          <span
-            style={{ fontSize: "0.85rem", color: "#cbd5e1", fontWeight: "500" }}
-          >
+        <div style={{ display: "flex", gap: "12px", alignItems: "center", marginLeft: "10px" }}>
+          <span style={{ fontSize: "0.85rem", color: "#cbd5e1", fontWeight: "500" }}>
             Salut, {user?.name}
           </span>
           <button className="navbar__btn navbar__btn--solid" onClick={logout}>
@@ -152,7 +149,7 @@ function Navbar() {
     </header>
   );
 }
-/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+
 function Sidebar() {
   const { user } = useAuth();
   const currentNavItems = getNavItems(user?.role);
@@ -179,16 +176,14 @@ function Sidebar() {
     </aside>
   );
 }
-/* ─── AppShell ────────────────────────────────────────────────────────────── */
+
 export default function Layout() {
   return (
     <div className="shell">
       <Navbar />
       <div className="shell__body">
         <Sidebar />
-        
         <div style={{ flex: 1, position: "relative", display: "flex", overflow: "hidden" }}>
-          
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
             <DotGrid
               dotSize={4}
@@ -202,13 +197,10 @@ export default function Layout() {
               returnDuration={1.2}
             />
           </div>
-
           <main className="main-content" style={{ zIndex: 1, width: "100%", background: "transparent" }}>
             <Outlet />
           </main>
-          
         </div>
-
       </div>
     </div>
   );

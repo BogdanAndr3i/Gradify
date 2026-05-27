@@ -32,6 +32,27 @@ def get_versions(thesis_id, section_id):
         result.append(data)
     return jsonify(result), 200
 
+@versions_bp.route("/<thesis_id>/sections/<section_id>/versions/<version_id>/diff", methods=["GET"])
+@jwt_required
+def get_diff(thesis_id, section_id, version_id):
+    version_ref = db.collection("theses").document(thesis_id)\
+        .collection("sections").document(section_id)\
+        .collection("versions").document(version_id)
+    version_doc = version_ref.get()
+    if not version_doc.exists:
+        return jsonify({"error": "Versiune negasita"}), 404
+
+    data = version_doc.to_dict()
+    if not data.get("hasDiff") or not data.get("diffGcsPath"):
+        return jsonify({"error": "Diff indisponibil"}), 404
+
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blob = bucket.blob(data["diffGcsPath"])
+    content = blob.download_as_text(encoding="utf-8")
+
+    from flask import Response
+    return Response(content, mimetype="text/plain")
+
 
 @versions_bp.route("/<thesis_id>/sections/<section_id>/versions/upload", methods=["POST"])
 @jwt_required
