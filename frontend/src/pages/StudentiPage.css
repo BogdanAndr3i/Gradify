@@ -1,0 +1,145 @@
+.studenti-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.studenti-header {
+  margin-bottom: 24px;
+}
+
+.studenti-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.studenti-header p {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Bara de căutare */
+.studenti-controls {
+  margin-bottom: 24px;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.search-input:focus {
+  border-color: #1a8cff;
+  box-shadow: 0 0 0 3px rgba(26, 140, 255, 0.15);
+}
+
+.table-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.studenti-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.studenti-table th {
+  background: #f8fafc;
+  padding: 14px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.studenti-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+  font-size: 0.95rem;
+}
+
+.studenti-table tr:last-child td {
+  border-bottom: none;
+}
+
+.studenti-table tr:hover {
+  background: #f8fafc;
+}
+
+.fw-600 {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.text-muted {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.badge-aprobat {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-asteptare {
+  background: #fef08a; 
+  color: #854d0e;
+}
+
+.badge-modificari {
+  background: #fee2e2; 
+  color: #b91c1c;
+}
+
+.badge-lipsa {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.btn-vezi-detalii {
+  background: #eef4ff;
+  color: #1a8cff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  white-space: nowrap;
+}
+
+.btn-vezi-detalii:hover {
+  background: #dbeafe;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px !important;
+  color: #64748b;
+  font-style: italic;
+}

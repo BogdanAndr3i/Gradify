@@ -1,0 +1,240 @@
+.revizuire-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+  transition: color 150ms ease;
+}
+
+.btn-back:hover {
+  color: #0f172a;
+}
+
+.revizuire-header {
+  margin-bottom: 32px;
+}
+
+.revizuire-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.student-info-bar {
+  display: flex;
+  gap: 24px;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.info-item {
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.info-item strong {
+  color: #0f172a;
+}
+
+.licenta-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a8cff;
+  margin: 0;
+}
+
+.istoric-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.istoric-card {
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05); 
+}
+
+.istoric-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.istoric-card__header:hover {
+  background: rgba(248, 250, 252, 0.5);
+}
+
+.istoric-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.istoric-card__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.istoric-card__date {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.istoric-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-aprobat { background: #d1fae5; color: #065f46; }
+.status-revizuire { background: #ffedd5; color: #c2410c; }
+.status-asteptare { background: #e2e8f0; color: #475569; }
+
+.btn-expand {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.istoric-card__body {
+  padding: 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.file-section h4, .action-section h4, .feedback-section h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 12px;
+}
+
+.file-download-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  width: fit-content;
+}
+
+.btn-download {
+  margin-left: 16px;
+  background: #eef4ff;
+  color: #1a8cff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feedback-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  margin-bottom: 16px;
+  transition: border-color 150ms ease;
+}
+
+.feedback-input:focus {
+  outline: none;
+  border-color: #1a8cff;
+}
+
+.decision-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-approve, .btn-reject {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 150ms ease;
+}
+
+.btn-approve {
+  background: #10b981;
+  color: white;
+}
+
+.btn-reject {
+  background: #fff;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.btn-approve:hover, .btn-reject:hover {
+  opacity: 0.9;
+}
+
+.btn-reject:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback-text {
+  font-size: 0.95rem;
+  color: #1e293b;
+  line-height: 1.6;
+  background: #ffffff;
+  padding: 16px;
+  border-left: 4px solid #cbd5e1;
+  border-radius: 4px 8px 8px 4px;
+  margin: 0;
+}
+
+.feedback-empty {
+  font-size: 0.95rem;
+  color: #64748b;
+  font-style: italic;
+  margin: 0;
+}

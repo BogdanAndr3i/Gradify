@@ -1,0 +1,132 @@
+.toate-licentele-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.toate-licentele-header {
+  margin-bottom: 24px;
+}
+
+.toate-licentele-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.toate-licentele-header p {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.toate-licentele-controls {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 450px;
+  padding: 10px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.search-input:focus {
+  border-color: #1a8cff;
+  box-shadow: 0 0 0 3px rgba(26, 140, 255, 0.15);
+}
+
+.btn-export {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-export:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.table-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.toate-licentele-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.toate-licentele-table th {
+  background: #f8fafc;
+  padding: 14px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.toate-licentele-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+  font-size: 0.95rem;
+}
+
+.toate-licentele-table tr:last-child td { border-bottom: none; }
+.toate-licentele-table tr:hover { background: #f8fafc; }
+
+.fw-600 { font-weight: 600; color: #0f172a; }
+.text-muted { color: #64748b; font-size: 0.9rem; }
+.text-center { text-align: center; }
+
+.licenta-titlu {
+  max-width: 350px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.badge-progres { background: #eef4ff; color: #1a8cff; }
+.badge-aprobat { background: #d1fae5; color: #065f46; }
+.badge-respins { background: #fee2e2; color: #b91c1c; }
+
+.empty-state {
+  text-align: center;
+  padding: 40px !important;
+  color: #64748b;
+  font-style: italic;
+}
