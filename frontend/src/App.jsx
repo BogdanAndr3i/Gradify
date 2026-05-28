@@ -10,6 +10,7 @@ import RevizuirePage from "./pages/RevizuirePage";
 import UsersPage from "./pages/UsersPage";
 import ToateLicentelePage from "./pages/ToateLicentelePage";
 import ProfilPage from "./pages/ProfilPage";
+import TesterPlagiatPage from "./pages/TesterPlagiatPage";
 
 function WaitingRoom() {
   const { user, logout } = useAuth();
@@ -71,6 +72,7 @@ function AppRoutes() {
         <Route path="studenti"         element={<StudentiPage />} />
         <Route path="revizuire/:thesisId" element={<RevizuirePage />} />
         <Route path="profil" element={<ProfilPage />} />
+        <Route path="tester-plagiat" element={<TesterPlagiatPage />} />
       </Route>
     </Routes>
   );

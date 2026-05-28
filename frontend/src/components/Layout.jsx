@@ -60,9 +60,10 @@ const getNavItems = (role) => {
       ];
     case "prof":
       return [
-        { to: "/dashboard", label: "Panou Profesor", icon: <GridIcon /> },
-        { to: "/studenti",  label: "Studenți",       icon: <UsersIcon /> },
-        { to: "/profil",    label: "Profil",         icon: <ProfilIcon /> },
+        { to: "/dashboard",      label: "Panou Profesor", icon: <GridIcon /> },
+        { to: "/studenti",       label: "Studenți",       icon: <UsersIcon /> },
+        { to: "/tester-plagiat", label: "Tester Plagiat", icon: <FileIcon /> },
+        { to: "/profil",         label: "Profil",         icon: <ProfilIcon /> },
       ];
     case "admin":
       return [

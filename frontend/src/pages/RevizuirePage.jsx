@@ -64,6 +64,22 @@ function parseDiff(diffText) {
   return { oldValue: oldLines.join("\n"), newValue: newLines.join("\n") };
 }
 
+const getRiskLabel = (risc) => {
+  if (!risc) return "";
+  const r = risc.toUpperCase();
+  if (r === "VERDE") return "Scăzut";
+  if (r === "GALBEN") return "Mediu";
+  if (r.includes("RO")) return "Ridicat";
+  return risc;
+};
+
+const getRiskStyle = (risc) => {
+  const r = (risc || "").toUpperCase();
+  if (r === "VERDE")   return { background: "#dcfce7", color: "#15803d", border: "1px solid #bbf7d0" };
+  if (r === "GALBEN")  return { background: "#fef9c3", color: "#a16207", border: "1px solid #fef08a" };
+  return { background: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca" };
+};
+
 function VersionCard({ version, thesisId, sectionId, onStatusUpdate }) {
   const [feedback,    setFeedback]    = useState(version.feedbackGeneral || "");
   const [saving,      setSaving]      = useState(false);
@@ -95,9 +111,7 @@ function VersionCard({ version, thesisId, sectionId, onStatusUpdate }) {
     }
   };
 
-
-
-const setStatus = async (status) => {
+  const setStatus = async (status) => {
     setSaving(true);
     try {
       if (feedback.trim()) {
@@ -110,7 +124,8 @@ const setStatus = async (status) => {
         `/api/theses/${thesisId}/sections/${sectionId}/versions/${version.id}/status`,
         { status }
       );
-      onStatusUpdate(sectionId, version.id, status);
+      onStatusUpdate(sectionId, version.id, status, feedback);
+
     } catch (e) {
       alert(e.message);
     } finally {
@@ -139,8 +154,8 @@ const setStatus = async (status) => {
   <div className="version-card__body">
     <div className="file-section">
       <h4>Fișier:</h4>
-      
-      <a /* <-- Adaugă <a aici */
+
+      <a
         className="file-download-box"
         href={`https://gradify-497616.ew.r.appspot.com/api/theses/${thesisId}/sections/${sectionId}/versions/${version.id}/download`}
         target="_blank"
@@ -163,6 +178,34 @@ const setStatus = async (status) => {
       </a>
     </div>
 
+    {/* Panel plagiat */}
+<div style={{ marginTop: "12px" }}>
+  {version.plagiat === undefined || version.plagiat === null ? (
+    <div style={{ fontSize: "0.85rem", color: "#94a3b8", display: "flex", alignItems: "center", gap: "6px" }}>
+      <span>⏳</span> Analiză plagiat în curs...
+    </div>
+  ) : version.plagiat?.eroare ? (
+    <div style={{ fontSize: "0.85rem", color: "#ef4444" }}>
+      ⚠️ Analiză plagiat eșuată
+    </div>
+  ) : (
+    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+      <span style={{
+        padding: "4px 12px", borderRadius: "9999px", fontSize: "0.8rem", fontWeight: 600,
+        ...getRiskStyle(version.plagiat.risc),
+      }}>
+        {getRiskLabel(version.plagiat.risc)} — {version.plagiat.scor}% similaritate
+      </span>
+      {version.plagiat.surse?.length > 0 && (
+        <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+          Surse: {version.plagiat.surse.slice(0, 2).map(s => s.document).join(", ")}
+          {version.plagiat.surse.length > 2 ? ` +${version.plagiat.surse.length - 2}` : ""}
+        </span>
+      )}
+    </div>
+  )}
+</div>
+
           {version.hasDiff && (
             <div className="diff-section">
               <button
@@ -170,7 +213,7 @@ const setStatus = async (status) => {
                 onClick={toggleDiff}
                 disabled={diffLoading}
               >
-                {diffLoading ? "Se încarcă..." : diffOpen ? "▲ Ascunde Diff" : "⟳ Vezi modificări față de versiunea anterioară"}
+                {diffLoading ? "Se încarcă..." : diffOpen ? "▲ Ascunde Diff" : "👁️ Vezi modificări față de versiunea anterioară"}
               </button>
 
               {diffOpen && diffParsed && (
@@ -278,7 +321,7 @@ export default function RevizuirePage() {
   const toggleSection = (id) =>
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
-const handleStatusUpdate = (sectionId, versionId, newStatus, newFeedback) => {
+  const handleStatusUpdate = (sectionId, versionId, newStatus, newFeedback) => {
     setVersions(prev => ({
       ...prev,
       [sectionId]: prev[sectionId].map(v =>

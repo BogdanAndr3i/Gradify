@@ -12,6 +12,7 @@ from blueprints.versions import versions_bp
 from blueprints.feedback import feedback_bp
 from blueprints.status import status_bp
 from blueprints.admin import admin_bp
+from blueprints.plagiat import plagiat_bp
 
 app = Flask(__name__)
 
@@ -28,6 +29,7 @@ app.register_blueprint(versions_bp, url_prefix="/api/theses")
 app.register_blueprint(feedback_bp, url_prefix="/api/theses")
 app.register_blueprint(status_bp, url_prefix="/api/theses")
 app.register_blueprint(admin_bp, url_prefix="/api/admin")
+app.register_blueprint(plagiat_bp, url_prefix="/api/plagiat")
 
 @app.errorhandler(404)
 def not_found(e):

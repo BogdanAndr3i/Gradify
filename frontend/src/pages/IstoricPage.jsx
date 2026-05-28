@@ -38,6 +38,22 @@ function formatDate(ts) {
   return new Date(ms).toLocaleDateString("ro-RO");
 }
 
+const getRiskLabel = (risc) => {
+  if (!risc) return "";
+  const r = risc.toUpperCase();
+  if (r === "VERDE") return "Scăzut";
+  if (r === "GALBEN") return "Mediu";
+  if (r.includes("RO")) return "Ridicat";
+  return risc;
+};
+
+const getRiskStyle = (risc) => {
+  const r = (risc || "").toUpperCase();
+  if (r === "VERDE")  return { background: "#dcfce7", color: "#15803d" };
+  if (r === "GALBEN") return { background: "#fef9c3", color: "#a16207" };
+  return { background: "#fee2e2", color: "#b91c1c" };
+};
+
 export default function IstoricPage() {
   const [thesis,   setThesis]   = useState(null);
   const [sections, setSections] = useState([]);
@@ -83,7 +99,7 @@ export default function IstoricPage() {
   if (!thesis) return (
     <div className="istoric-container">
       <div className="istoric-header">
-        <h1>Status și Istoric Încărcări</h1>
+        <h1>Status și Istoric încărcări</h1>
         <p>Nu ai nicio lucrare asignată momentan.</p>
       </div>
     </div>
@@ -148,9 +164,22 @@ export default function IstoricPage() {
                                 {formatDate(v.submittedAt)}
                               </span>
                             </div>
-                            <span className={`status-badge ${STATUS_CLASS[v.status] || ""}`}>
-                              {STATUS_LABEL[v.status] || v.status}
-                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+  <span className={`status-badge ${STATUS_CLASS[v.status] || ""}`}>
+    {STATUS_LABEL[v.status] || v.status}
+  </span>
+  {v.plagiat === null && (
+    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>⏳ plagiat...</span>
+  )}
+  {v.plagiat && !v.plagiat.eroare && (
+    <span style={{
+      fontSize: "0.75rem", fontWeight: 600, padding: "2px 8px", borderRadius: "9999px",
+      ...getRiskStyle(v.plagiat.risc),
+    }}>
+      {getRiskLabel(v.plagiat.risc)} {v.plagiat.scor}%
+    </span>
+  )}
+</div>
                           </div>
 
                           {v.feedbackGeneral && (
