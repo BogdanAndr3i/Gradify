@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from dotenv import load_dotenv
 load_dotenv()
 
+from flask_cors import CORS
 from firestore_connect import db
 from logger import log_error, log_info, log_warning
 from blueprints.auth import auth_bp
@@ -11,14 +12,14 @@ from blueprints.versions import versions_bp
 from blueprints.feedback import feedback_bp
 from blueprints.status import status_bp
 from blueprints.admin import admin_bp
-from flask_cors import CORS
+
+app = Flask(__name__)
+
 CORS(app, origins=[
     "https://gradify-497616.web.app",
     "https://gradify-497616.firebaseapp.com",
     "http://localhost:5173"
 ])
-
-app = Flask(__name__)
 
 app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(thesis_bp, url_prefix="/api/theses")
@@ -40,10 +41,7 @@ def method_not_allowed(e):
 
 @app.errorhandler(500)
 def internal_error(e):
-    log_error(
-        f"500 - {request.method} {request.path}",
-        extra={"error": str(e)}
-    )
+    log_error(f"500 - {request.method} {request.path}", extra={"error": str(e)})
     return jsonify({"error": "Eroare interna de server"}), 500
 
 @app.errorhandler(Exception)
