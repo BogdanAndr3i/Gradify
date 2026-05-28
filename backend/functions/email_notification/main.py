@@ -7,6 +7,11 @@ import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import requests
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2 import id_token as google_id_token
+
+PLAGIAT_SERVICE_URL = "https://plagiat-service-499391921089.europe-west1.run.app"
 
 # Inițializare Firebase Admin doar dacă nu a fost deja inițializat
 if not firebase_admin._apps:
@@ -288,6 +293,19 @@ def build_body(event_type: str, data: dict) -> tuple[str, str, str]:
 
     return subject, body, role_text
 
+def trigger_corpus_rebuild():
+    try:
+        auth_req = GoogleAuthRequest()
+        token = google_id_token.fetch_id_token(auth_req, PLAGIAT_SERVICE_URL)
+        requests.post(
+            f"{PLAGIAT_SERVICE_URL}/rebuild-corpus",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10
+        )
+        print("[email_notification] Rebuild corpus triggered.")
+    except Exception as e:
+        print(f"[email_notification] Rebuild corpus error: {e}")
+
 @functions_framework.cloud_event
 def email_notification(cloud_event):
     raw = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
@@ -323,6 +341,8 @@ def email_notification(cloud_event):
             payload.get("sectionId", ""),
             payload.get("versionId", "")
         )
+    if event_type == "status_changed" and payload.get("status") == "APPROVED":
+        trigger_corpus_rebuild()
 
     data = {
         "recipient_name": recipient.get("name", ""),

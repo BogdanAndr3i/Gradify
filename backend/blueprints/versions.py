@@ -6,9 +6,52 @@ from blueprints.sections import detect_type
 from config import BUCKET_NAME, PUBSUB_TOPIC_SECTION_UPLOADED, PUBSUB_TOPIC_STATUS_CHANGED
 import uuid
 import json
+import threading
+import requests
 from datetime import datetime
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2 import id_token as google_id_token
+
+PLAGIAT_SERVICE_URL = "https://plagiat-service-499391921089.europe-west1.run.app"
 
 versions_bp = Blueprint("versions", __name__)
+
+
+def call_plagiat_service(thesis_id, section_id, version_id, gcs_path):
+    try:
+        auth_req = GoogleAuthRequest()
+        token = google_id_token.fetch_id_token(auth_req, PLAGIAT_SERVICE_URL)
+
+        response = requests.post(
+            f"{PLAGIAT_SERVICE_URL}/api/analyze",
+            json={"gcs_path": gcs_path, "version_id": version_id},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=60
+        )
+        result = response.json()
+
+        if result.get("status") == "succes":
+            sumar = result["sumar_analiza"]
+            plagiat_data = {
+                "scor": sumar["scor_general"],
+                "risc": sumar["stare_risc"],
+                "surse": result.get("surse_principale", []),
+                "fragmente": result.get("fragmente_suspecte", []),
+                "analizatLa": datetime.utcnow()
+            }
+        else:
+            plagiat_data = {
+                "eroare": result.get("eroare", "Eroare necunoscuta"),
+                "analizatLa": datetime.utcnow()
+            }
+
+        db.collection("theses").document(thesis_id)\
+            .collection("sections").document(section_id)\
+            .collection("versions").document(version_id)\
+            .update({"plagiat": plagiat_data})
+
+    except Exception as e:
+        print(f"[plagiat] Eroare: {e}")
 
 @versions_bp.route("/<thesis_id>/sections/<section_id>/versions", methods=["GET"])
 @jwt_required
@@ -135,7 +178,9 @@ def upload_version(thesis_id, section_id):
         "submittedAt": now,
         "feedbackGeneral": None,
         "diffGcsPath": None,
-        "hasDiff": False
+        "hasDiff": False,
+        "plagiat": None
+
     })
 
     section_title = section_data.get("title", "")
@@ -164,5 +209,10 @@ def upload_version(thesis_id, section_id):
             "sectionTitle": section_title,
         }).encode("utf-8")
     )
+
+    threading.Thread(
+        target=call_plagiat_service,
+        args=(thesis_id, section_id, version_id, gcs_path)
+    ).start()
 
     return jsonify({"id": version_id, "versionNumber": version_number}), 201

@@ -1,0 +1,9 @@
+flask==3.0.3
+flask-cors
+pdfplumber
+scikit-learn
+nltk
+numpy
+google-cloud-storage
+google-cloud-firestore
+gunicorn
