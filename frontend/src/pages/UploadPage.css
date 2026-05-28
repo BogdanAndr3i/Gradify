@@ -294,3 +294,77 @@
   font-size: 0.875rem;
   cursor: pointer;
 }
+
+/* Status chips */
+.chip-status--approved {
+  border-color: #10b981;
+  color: #065f46;
+}
+.chip-status--approved:hover, .chip-status--approved.selected {
+  background: #d1fae5;
+  border-color: #10b981;
+}
+
+.chip-status--pending {
+  border-color: #f59e0b;
+  color: #92400e;
+}
+.chip-status--pending:hover, .chip-status--pending.selected {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.chip-status--rejected {
+  border-color: #ef4444;
+  color: #991b1b;
+}
+.chip-status--rejected:hover, .chip-status--rejected.selected {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+/* Feedback panel */
+.feedback-panel {
+  margin: 16px 0;
+  padding: 16px 20px;
+  border-radius: 10px;
+  border-left: 4px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.feedback-panel--pending {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+.feedback-panel--rejected {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+.feedback-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.feedback-panel__status {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.feedback-panel--pending .feedback-panel__status { color: #b45309; }
+.feedback-panel--rejected .feedback-panel__status { color: #b91c1c; }
+.feedback-panel__version {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+.feedback-panel__message {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  color: #1e293b;
+}
+.feedback-panel__message--empty {
+  color: #64748b;
+  font-style: italic;
+}

@@ -18,22 +18,47 @@ const PlusIcon = ({ size = 18 }) => (
   </svg>
 );
 
+const STATUS_CHIP = {
+  APPROVED:      { cls: "chip-status--approved", label: "Aprobat" },
+  PENDING:       { cls: "chip-status--pending",  label: "În așteptare" },
+  NEEDS_CHANGES: { cls: "chip-status--rejected", label: "Necesită modificări" },
+  REJECTED:      { cls: "chip-status--rejected", label: "Respins" },
+};
+
 export default function UploadPage() {
   const [thesis,          setThesis]          = useState(null);
   const [sections,        setSections]        = useState([]);
+  const [latestVersions,  setLatestVersions]  = useState({});
   const [selectedSection, setSelectedSection] = useState(null);
   const [file,            setFile]            = useState(null);
   const [loading,         setLoading]         = useState(true);
   const [error,           setError]           = useState(null);
 
-  // creare secțiune nouă
   const [creatingNew,   setCreatingNew]   = useState(false);
   const [newTitle,      setNewTitle]      = useState("");
   const [savingSection, setSavingSection] = useState(false);
 
-  // upload state
   const [uploading, setUploading] = useState(false);
   const [success,   setSuccess]   = useState(false);
+
+  async function loadSections(thesisId) {
+    const secs = await api.get(`/api/theses/${thesisId}/sections`);
+    setSections(secs);
+    // fetch latest version pentru fiecare sectiune
+    const vMap = {};
+    await Promise.all(secs.map(async (s) => {
+      try {
+        const versions = await api.get(`/api/theses/${thesisId}/sections/${s.id}/versions`);
+        if (versions.length > 0) {
+          // sortare dupa versionNumber descendent
+          const latest = versions.sort((a, b) => b.versionNumber - a.versionNumber)[0];
+          vMap[s.id] = latest;
+        }
+      } catch {}
+    }));
+    setLatestVersions(vMap);
+    return secs;
+  }
 
   useEffect(() => {
     async function load() {
@@ -42,8 +67,7 @@ export default function UploadPage() {
         if (!theses.length) { setLoading(false); return; }
         const th = theses[0];
         setThesis(th);
-        const secs = await api.get(`/api/theses/${th.id}/sections`);
-        setSections(secs);
+        await loadSections(th.id);
       } catch (e) {
         setError(e.message);
       } finally {
@@ -57,11 +81,8 @@ export default function UploadPage() {
     if (!newTitle.trim()) return;
     setSavingSection(true);
     try {
-      const created = await api.post(`/api/theses/${thesis.id}/sections`, {
-        title: newTitle.trim(),
-      });
-      const updated = await api.get(`/api/theses/${thesis.id}/sections`);
-      setSections(updated);
+      const created = await api.post(`/api/theses/${thesis.id}/sections`, { title: newTitle.trim() });
+      const updated = await loadSections(thesis.id);
       setSelectedSection(updated.find(s => s.id === created.id) || created);
       setCreatingNew(false);
       setNewTitle("");
@@ -79,15 +100,10 @@ export default function UploadPage() {
     try {
       const form = new FormData();
       form.append("file", file);
-      await api.upload(
-        `/api/theses/${thesis.id}/sections/${selectedSection.id}/versions/upload`,
-        form
-      );
+      await api.upload(`/api/theses/${thesis.id}/sections/${selectedSection.id}/versions/upload`, form);
       setSuccess(true);
       setFile(null);
-      // refresh secțiuni (type poate fi actualizat)
-      const updated = await api.get(`/api/theses/${thesis.id}/sections`);
-      setSections(updated);
+      await loadSections(thesis.id);
     } catch (e) {
       alert(e.message);
     } finally {
@@ -107,6 +123,7 @@ export default function UploadPage() {
   );
 
   const canUpload = selectedSection && file && !uploading;
+  const selectedLatest = selectedSection ? latestVersions[selectedSection.id] : null;
 
   return (
     <div className="upload-container">
@@ -115,7 +132,6 @@ export default function UploadPage() {
         <p>Lucrare: <strong>{thesis.title}</strong></p>
       </div>
 
-      {/* STEP 1 — Selectează sau creează secțiune */}
       <BorderGlow
         backgroundColor="#ffffff"
         borderRadius={12}
@@ -126,18 +142,22 @@ export default function UploadPage() {
         <div className="upload-section-picker">
           <h3 className="section-picker__title">1. Selectează secțiunea</h3>
           <div className="section-chips">
-            {sections.map(s => (
-              <button
-                key={s.id}
-                className={`section-chip ${selectedSection?.id === s.id ? "selected" : ""}`}
-                onClick={() => { setSelectedSection(s); setSuccess(false); setFile(null); }}
-              >
-                {s.title}
-                {s.type && s.type !== "pending" && (
-                  <span className="chip-type">{s.type}</span>
-                )}
-              </button>
-            ))}
+            {sections.map(s => {
+              const latest = latestVersions[s.id];
+              const statusInfo = latest ? STATUS_CHIP[latest.status] : null;
+              return (
+                <button
+                  key={s.id}
+                  className={`section-chip ${selectedSection?.id === s.id ? "selected" : ""} ${statusInfo?.cls || ""}`}
+                  onClick={() => { setSelectedSection(s); setSuccess(false); setFile(null); }}
+                >
+                  {s.title}
+                  {s.type && s.type !== "pending" && (
+                    <span className="chip-type">{s.type.toUpperCase()}</span>
+                  )}
+                </button>
+              );
+            })}
 
             {!creatingNew ? (
               <button className="section-chip section-chip--new" onClick={() => setCreatingNew(true)}>
@@ -154,18 +174,10 @@ export default function UploadPage() {
                   onKeyDown={e => { if (e.key === "Enter") handleCreateSection(); if (e.key === "Escape") { setCreatingNew(false); setNewTitle(""); } }}
                   disabled={savingSection}
                 />
-                <button
-                  className="btn-confirm-section"
-                  onClick={handleCreateSection}
-                  disabled={!newTitle.trim() || savingSection}
-                >
+                <button className="btn-confirm-section" onClick={handleCreateSection} disabled={!newTitle.trim() || savingSection}>
                   {savingSection ? "..." : "Confirmă"}
                 </button>
-                <button
-                  className="btn-cancel-section"
-                  onClick={() => { setCreatingNew(false); setNewTitle(""); }}
-                  disabled={savingSection}
-                >
+                <button className="btn-cancel-section" onClick={() => { setCreatingNew(false); setNewTitle(""); }} disabled={savingSection}>
                   Anulează
                 </button>
               </div>
@@ -174,15 +186,35 @@ export default function UploadPage() {
         </div>
       </BorderGlow>
 
-      {/* STEP 2 — Upload fișier */}
+      {/* Feedback panel */}
+      {selectedLatest && selectedLatest.status !== "APPROVED" && (
+        <div className={`feedback-panel feedback-panel--${selectedLatest.status === "PENDING" ? "pending" : "rejected"}`}>
+          <div className="feedback-panel__header">
+            <span className="feedback-panel__status">
+              {STATUS_CHIP[selectedLatest.status]?.label || selectedLatest.status}
+            </span>
+            <span className="feedback-panel__version">Versiunea {selectedLatest.versionNumber}</span>
+          </div>
+          {selectedLatest.feedbackGeneral ? (
+            <p className="feedback-panel__message">
+              <strong>Feedback profesor:</strong> {selectedLatest.feedbackGeneral}
+            </p>
+          ) : (
+            <p className="feedback-panel__message feedback-panel__message--empty">
+              {selectedLatest.status === "PENDING"
+                ? "Secțiunea este în așteptare — profesorul nu a revizuit-o încă."
+                : "Profesorul nu a lăsat un mesaj suplimentar."}
+            </p>
+          )}
+        </div>
+      )}
+
       {selectedSection && (
         <BorderGlow
           backgroundColor="#ffffff"
           borderRadius={12}
           glowColor={success ? "160 84 40" : "210 100 60"}
-          colors={success
-            ? ['#10b981', '#34d399', '#6ee7b7']
-            : ['#1a8cff', '#60a5fa', '#93c5fd']}
+          colors={success ? ['#10b981', '#34d399', '#6ee7b7'] : ['#1a8cff', '#60a5fa', '#93c5fd']}
           glowIntensity={canUpload ? 1.3 : 1.0}
         >
           <div className="upload-form">
@@ -203,9 +235,7 @@ export default function UploadPage() {
                   {file ? file.name : "Alege sau trage fișierul aici"}
                 </span>
                 {file && (
-                  <span className="upload-box__size">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
+                  <span className="upload-box__size">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                 )}
               </label>
             </div>
@@ -217,11 +247,7 @@ export default function UploadPage() {
             )}
 
             <div className="upload-actions">
-              <button
-                className="btn-submit-upload"
-                onClick={handleUpload}
-                disabled={!canUpload}
-              >
+              <button className="btn-submit-upload" onClick={handleUpload} disabled={!canUpload}>
                 {uploading ? "Se trimite..." : "Trimite spre Revizuire"}
               </button>
             </div>

@@ -14,7 +14,7 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 PROJECT_ID = "gradify-497616"
-GMAIL_SENDER = "gradify.notificari@gmail.com"
+GMAIL_SENDER = "gradify.notifications@gmail.com"
 
 STATUS_LABELS = {
     "APPROVED": "Aprobata",

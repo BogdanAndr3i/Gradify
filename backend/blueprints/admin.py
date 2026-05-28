@@ -96,3 +96,17 @@ def update_platform():
 
     db.collection("platform").document("config").set(update_data, merge=True)
     return jsonify({"message": "Configuratie actualizata"}), 200
+
+@admin_bp.route("/users/<user_id>/reject", methods=["DELETE"])
+@jwt_required
+@role_required("admin")
+def reject_user(user_id):
+    user_ref = db.collection("users").document(user_id)
+    if not user_ref.get().exists:
+        return jsonify({"error": "Utilizator negasit"}), 404
+    user_ref.delete()
+    try:
+        auth.delete_user(user_id)
+    except Exception:
+        pass
+    return jsonify({"message": "Utilizator respins si sters"}), 200

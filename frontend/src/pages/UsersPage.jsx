@@ -8,7 +8,8 @@ export default function UsersPage() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [approving, setApproving]   = useState(null);
+  const [approving, setApproving] = useState(null);
+  const [rejecting, setRejecting] = useState(null);  
 
   useEffect(() => {
     api.get("/api/admin/users")
@@ -30,6 +31,19 @@ export default function UsersPage() {
       setApproving(null);
     }
   };
+
+  const handleReject = async (userId) => {
+  if (!window.confirm("Sigur vrei să respingi și să ștergi acest cont?")) return;
+  setRejecting(userId);
+  try {
+    await api.delete(`/api/admin/users/${userId}/reject`);
+    setUsers(prev => prev.filter(u => u.id !== userId));
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    setRejecting(null);
+  }
+};
 
   const filtered = users.filter(u =>
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,7 +118,7 @@ export default function UsersPage() {
                           <button
                             className="btn-approve-role btn-student"
                             onClick={() => handleApprove(user.id, "student")}
-                            disabled={approving === user.id}
+                            disabled={approving === user.id || rejecting === user.id}
                             title="Aprobă ca Student"
                           >
                             Student
@@ -112,10 +126,18 @@ export default function UsersPage() {
                           <button
                             className="btn-approve-role btn-prof"
                             onClick={() => handleApprove(user.id, "prof")}
-                            disabled={approving === user.id}
+                            disabled={approving === user.id || rejecting === user.id}
                             title="Aprobă ca Profesor"
                           >
                             Prof
+                          </button>
+                          <button
+                            className="btn-approve-role btn-reject"
+                            onClick={() => handleReject(user.id)}
+                            disabled={approving === user.id || rejecting === user.id}
+                            title="Respinge și șterge contul"
+                          >
+                            Respinge
                           </button>
                         </div>
                       ) : (

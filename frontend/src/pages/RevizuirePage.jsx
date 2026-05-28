@@ -142,24 +142,42 @@ function VersionCard({ version, thesisId, sectionId, onStatusUpdate }) {
         </div>
       </div>
 
-      {expanded && (
-        <div className="version-card__body">
-          <div className="file-section">
-            <h4>Fișier:</h4>
-            <div className="file-download-box">
-              <FolderIcon size={20} color="#1a8cff" />
-              <span className="file-name">{version.mimeType} — {(version.sizeBytes / 1024).toFixed(1)} KB</span>
-            </div>
-          </div>
+     {expanded && (
+  <div className="version-card__body">
+    <div className="file-section">
+      <h4>Fișier:</h4>
+      
+      <a /* <-- Adaugă <a aici */
+        className="file-download-box"
+        href={`https://gradify-497616.ew.r.appspot.com/api/theses/${thesisId}/sections/${sectionId}/versions/${version.id}/download`}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={async (e) => {
+          e.preventDefault();
+          const token = await auth.currentUser?.getIdToken();
+          const url = `https://gradify-497616.ew.r.appspot.com/api/theses/${thesisId}/sections/${sectionId}/versions/${version.id}/download`;
+          const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+          const blob = await res.blob();
+          const objUrl = URL.createObjectURL(blob);
+          window.open(objUrl, "_blank");
+        }}
+      >
+        <FolderIcon size={20} color="#1a8cff" />
+        <span className="file-name">
+          {version.mimeType} — {(version.sizeBytes / 1024).toFixed(1)} KB
+        </span>
+        <span className="file-download-hint">Deschide →</span>
+      </a>
+    </div>
 
           {version.hasDiff && (
             <div className="diff-section">
               <button
-                className="btn-secondary"
+                className="btn-diff"
                 onClick={toggleDiff}
                 disabled={diffLoading}
               >
-                {diffLoading ? "Se încarcă..." : diffOpen ? "Ascunde Diff" : "Vezi Diff față de versiunea anterioară"}
+                {diffLoading ? "Se încarcă..." : diffOpen ? "▲ Ascunde Diff" : "⟳ Vezi modificări față de versiunea anterioară"}
               </button>
 
               {diffOpen && diffParsed && (

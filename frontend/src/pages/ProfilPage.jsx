@@ -10,7 +10,6 @@ const ROLE_LABEL = {
   admin:   "Administrator",
   pending: "Cont în așteptare",
 };
-
 const ROLE_COLOR = {
   student: "#1a8cff",
   prof:    "#7c3aed",
@@ -22,20 +21,7 @@ function Avatar({ name }) {
   const initials = name
     ? name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()
     : "?";
-  return (
-    <div className="profil-avatar">
-      {initials}
-    </div>
-  );
-}
-
-function InfoRow({ label, value }) {
-  return (
-    <div className="profil-info-row">
-      <span className="profil-info-label">{label}</span>
-      <span className="profil-info-value">{value || <em className="profil-empty">Necompletat</em>}</span>
-    </div>
-  );
+  return <div className="profil-avatar">{initials}</div>;
 }
 
 function formatDate(ts) {
@@ -46,16 +32,53 @@ function formatDate(ts) {
 
 export default function ProfilPage() {
   const { logout } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [profile,  setProfile]  = useState(null);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState(null);
+
+  // edit state
+  const [editing,    setEditing]    = useState(false);
+  const [facultate,  setFacultate]  = useState("");
+  const [departament,setDepartament]= useState("");
+  const [saving,     setSaving]     = useState(false);
+  const [saveError,  setSaveError]  = useState(null);
 
   useEffect(() => {
     api.get("/api/auth/me")
-      .then(setProfile)
+      .then(data => {
+        setProfile(data);
+        setFacultate(data.facultate || "");
+        setDepartament(data.departament || "");
+      })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  function startEdit() {
+    setFacultate(profile.facultate || "");
+    setDepartament(profile.departament || "");
+    setSaveError(null);
+    setEditing(true);
+  }
+
+  function cancelEdit() {
+    setEditing(false);
+    setSaveError(null);
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await api.put("/api/auth/me", { facultate, departament });
+      setProfile(prev => ({ ...prev, facultate, departament }));
+      setEditing(false);
+    } catch (e) {
+      setSaveError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (loading) return <div className="profil-container"><p>Se încarcă...</p></div>;
   if (error)   return <div className="profil-container"><p style={{ color: "red" }}>{error}</p></div>;
@@ -81,7 +104,10 @@ export default function ProfilPage() {
             <Avatar name={profile.name} />
             <div className="profil-top__info">
               <h2 className="profil-name">{profile.name}</h2>
-              <span className="profil-role-badge" style={{ background: roleColor + "18", color: roleColor, borderColor: roleColor + "40" }}>
+              <span
+                className="profil-role-badge"
+                style={{ background: roleColor + "18", color: roleColor, borderColor: roleColor + "40" }}
+              >
                 {ROLE_LABEL[profile.role] || profile.role}
               </span>
             </div>
@@ -90,18 +116,81 @@ export default function ProfilPage() {
           <div className="profil-divider" />
 
           <div className="profil-info-list">
-            <InfoRow label="Email"       value={profile.email} />
-            <InfoRow label="Facultate"   value={profile.facultate} />
-            <InfoRow label="Departament" value={profile.departament} />
-            <InfoRow label="Membru din"  value={formatDate(profile.createdAt)} />
+            {/* Câmpuri fixe */}
+            <div className="profil-info-row">
+              <span className="profil-info-label">Email</span>
+              <span className="profil-info-value">{profile.email}</span>
+            </div>
+            <div className="profil-info-row">
+              <span className="profil-info-label">Membru din</span>
+              <span className="profil-info-value">{formatDate(profile.createdAt)}</span>
+            </div>
+
+            {/* Câmpuri editabile */}
+            {editing ? (
+              <>
+                <div className="profil-info-row profil-edit-row">
+                  <label className="profil-info-label" htmlFor="facultate">Facultate</label>
+                  <input
+                    id="facultate"
+                    className="profil-input"
+                    value={facultate}
+                    onChange={e => setFacultate(e.target.value)}
+                    placeholder="ex: Facultatea de Informatică"
+                  />
+                </div>
+                <div className="profil-info-row profil-edit-row">
+                  <label className="profil-info-label" htmlFor="departament">Departament</label>
+                  <input
+                    id="departament"
+                    className="profil-input"
+                    value={departament}
+                    onChange={e => setDepartament(e.target.value)}
+                    placeholder="ex: Informatică"
+                  />
+                </div>
+                {saveError && <p className="profil-save-error">{saveError}</p>}
+              </>
+            ) : (
+              <>
+                <div className="profil-info-row">
+                  <span className="profil-info-label">Facultate</span>
+                  <span className="profil-info-value">
+                    {profile.facultate || <em className="profil-empty">Necompletat</em>}
+                  </span>
+                </div>
+                <div className="profil-info-row">
+                  <span className="profil-info-label">Departament</span>
+                  <span className="profil-info-value">
+                    {profile.departament || <em className="profil-empty">Necompletat</em>}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="profil-divider" />
 
           <div className="profil-actions">
-            <button className="btn-logout" onClick={logout}>
-              Deconectare
-            </button>
+            {editing ? (
+              <>
+                <button className="btn-cancel-edit" onClick={cancelEdit} disabled={saving}>
+                  Anulează
+                </button>
+                <button className="btn-save" onClick={handleSave} disabled={saving}>
+                  {saving ? "Se salvează..." : "Salvează"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="btn-edit" onClick={startEdit}>
+                  Editează profil
+                </button>
+                <button className="btn-logout" onClick={logout}>
+                  Deconectare
+                </button>
+              </>
+            )}
           </div>
         </div>
       </BorderGlow>

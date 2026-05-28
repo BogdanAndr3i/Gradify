@@ -115,3 +115,74 @@
   background: #fef2f2;
   border-color: #fca5a5;
 }
+
+.profil-edit-row {
+  align-items: center;
+}
+
+.profil-input {
+  flex: 1;
+  padding: 7px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 0.875rem;
+  outline: none;
+  text-align: right;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.profil-input:focus {
+  border-color: #1a8cff;
+  box-shadow: 0 0 0 3px rgba(26,140,255,0.15);
+}
+
+.profil-save-error {
+  font-size: 0.8rem;
+  color: #b91c1c;
+  text-align: right;
+}
+
+.profil-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-edit {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.btn-edit:hover { background: #e2e8f0; }
+
+.btn-save {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: none;
+  background: #1a8cff;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.btn-save:hover:not(:disabled) { background: #1570cc; }
+.btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-cancel-edit {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.btn-cancel-edit:hover { background: #f1f5f9; }

@@ -53,6 +53,32 @@ def get_diff(thesis_id, section_id, version_id):
     from flask import Response
     return Response(content, mimetype="text/plain")
 
+@versions_bp.route("/<thesis_id>/sections/<section_id>/versions/<version_id>/download", methods=["GET"])
+@jwt_required
+def download_version(thesis_id, section_id, version_id):
+    version_ref = db.collection("theses").document(thesis_id)\
+        .collection("sections").document(section_id)\
+        .collection("versions").document(version_id)
+    version_doc = version_ref.get()
+    if not version_doc.exists:
+        return jsonify({"error": "Versiune negasita"}), 404
+
+    data = version_doc.to_dict()
+    gcs_path = data.get("gcsPath")
+    mime_type = data.get("mimeType", "application/octet-stream")
+    filename = gcs_path.split("/")[-1] if gcs_path else "fisier"
+
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blob = bucket.blob(gcs_path)
+    content = blob.download_as_bytes()
+
+    from flask import Response
+    return Response(
+        content,
+        mimetype=mime_type,
+        headers={"Content-Disposition": f'inline; filename="{filename}"'}
+    )
+
 
 @versions_bp.route("/<thesis_id>/sections/<section_id>/versions/upload", methods=["POST"])
 @jwt_required

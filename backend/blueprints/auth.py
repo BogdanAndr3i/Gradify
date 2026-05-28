@@ -54,3 +54,15 @@ def me():
 @jwt_required
 def logout():
     return jsonify({"message": "Deconectat"}), 200
+
+@auth_bp.route("/me", methods=["PUT"])
+@jwt_required
+def update_me():
+    body = request.get_json() or {}
+    allowed = ["facultate", "departament"]
+    update_data = {k: body[k] for k in allowed if k in body}
+    if not update_data:
+        return jsonify({"error": "Niciun camp de actualizat"}), 400
+    update_data["updatedAt"] = datetime.utcnow()
+    db.collection("users").document(g.user_id).update(update_data)
+    return jsonify({"message": "Profil actualizat"}), 200

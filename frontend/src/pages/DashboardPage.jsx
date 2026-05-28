@@ -10,7 +10,7 @@ import "./DashboardPage.css";
 // ── Student ──────────────────────────────────────────────────────────────────
 function StudentDashboard({ platform }) {
   const navigate = useNavigate();
-  const [thesis, setThesis] = useState(null);
+  const [thesis,  setThesis]  = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,9 +32,7 @@ function StudentDashboard({ platform }) {
             <p className="status-text">Se încarcă...</p>
           ) : thesis ? (
             <>
-              <p className="status-text">
-                <strong>{thesis.title}</strong>
-              </p>
+              <p className="status-text"><strong>{thesis.title}</strong></p>
               <span className={`status-badge ${getStatusClass(thesis.globalStatus)}`}>
                 {getStatusLabel(thesis.globalStatus)}
               </span>
@@ -74,7 +72,7 @@ function StudentDashboard({ platform }) {
 // ── Profesor ─────────────────────────────────────────────────────────────────
 function ProfDashboard({ platform }) {
   const navigate = useNavigate();
-  const [theses, setTheses] = useState([]);
+  const [theses,  setTheses]  = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -130,11 +128,17 @@ function ProfDashboard({ platform }) {
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
-function AdminDashboard({ platform }) {
+function AdminDashboard({ platform, onPlatformUpdate }) {
   const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
-  const [theses, setTheses] = useState([]);
+  const [users,   setUsers]   = useState([]);
+  const [theses,  setTheses]  = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [editing,   setEditing]   = useState(false);
+  const [anunt,     setAnunt]     = useState("");
+  const [termen,    setTermen]    = useState("");
+  const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -146,16 +150,44 @@ function AdminDashboard({ platform }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const pending = users.filter(u => u.role === "pending").length;
+  function startEdit() {
+    setAnunt(platform.anunt || "");
+    const ts = platform.termenLimita;
+    if (ts) {
+      const d = ts._seconds ? new Date(ts._seconds * 1000) : new Date(ts);
+      setTermen(d.toISOString().split("T")[0]);
+    } else {
+      setTermen("");
+    }
+    setSaveError(null);
+    setEditing(true);
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await api.put("/api/admin/platform", {
+        anunt: anunt.trim() || null,
+        termenLimita: termen ? new Date(termen).toISOString() : null,
+      });
+      onPlatformUpdate();
+      setEditing(false);
+    } catch (e) {
+      setSaveError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const pending  = users.filter(u => u.role === "pending").length;
   const approved = theses.filter(t => t.globalStatus === "APPROVED").length;
 
   return (
-    <div className="dashboard-grid">
+    <div className="dashboard-grid admin-grid">
       <BorderGlow backgroundColor="#ffffff" borderRadius={12} glowColor="210 100 60" colors={['#1a8cff', '#60a5fa', '#93c5fd']}>
         <div className="dashboard-card stats-card admin-stats">
-          {loading ? (
-            <p className="status-text">Se încarcă...</p>
-          ) : (
+          {loading ? <p className="status-text">Se încarcă...</p> : (
             <>
               <div className="stat-box">
                 <span className="stat-number">{users.length}</span>
@@ -177,9 +209,7 @@ function AdminDashboard({ platform }) {
       <BorderGlow backgroundColor="#fffbeb" borderRadius={12} glowColor="35 100 60" colors={['#fde68a', '#fbbf24', '#f59e0b']}>
         <div className="dashboard-card action-card alert-card">
           <h3>Atenție: Conturi Noi</h3>
-          {loading ? (
-            <p>Se încarcă...</p>
-          ) : (
+          {loading ? <p>Se încarcă...</p> : (
             <p>
               {pending > 0
                 ? <>Există <strong>{pending}</strong> utilizatori în așteptare care au nevoie de aprobare.</>
@@ -191,6 +221,62 @@ function AdminDashboard({ platform }) {
           </button>
         </div>
       </BorderGlow>
+
+      <BorderGlow backgroundColor="#ffffff" borderRadius={12} glowColor="210 100 60" colors={['#1a8cff', '#60a5fa', '#93c5fd']}>
+        <div className="dashboard-card action-card">
+          <h3>Avizier & Termen Limită</h3>
+          {editing ? (
+            <>
+              <label className="platform-label">Anunț platformă</label>
+              <textarea
+                className="platform-textarea"
+                rows={3}
+                value={anunt}
+                onChange={e => setAnunt(e.target.value)}
+                placeholder="Scrie un anunț vizibil tuturor utilizatorilor..."
+              />
+              <label className="platform-label" style={{ marginTop: 12 }}>Termen limită</label>
+              <input
+                type="date"
+                className="platform-input"
+                value={termen}
+                onChange={e => setTermen(e.target.value)}
+              />
+              {saveError && <p className="platform-error">{saveError}</p>}
+              <div className="platform-edit-actions">
+                <button className="btn-cancel-edit" onClick={() => setEditing(false)} disabled={saving}>
+                  Anulează
+                </button>
+                <button className="btn-save" onClick={handleSave} disabled={saving}>
+                  {saving ? "Se salvează..." : "Salvează"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="platform-preview">
+                <strong>Anunț:</strong>{" "}
+                {platform.anunt || <em style={{ color: "#94a3b8" }}>Nesetat</em>}
+              </p>
+              <p className="platform-preview">
+                <strong>Termen:</strong>{" "}
+                {platform.termenLimita
+                  ? new Date(
+                      platform.termenLimita._seconds
+                        ? platform.termenLimita._seconds * 1000
+                        : platform.termenLimita
+                    ).toLocaleDateString("ro-RO")
+                  : <em style={{ color: "#94a3b8" }}>Nesetat</em>}
+              </p>
+              <div className="card-actions">
+                <button className="btn-primary" onClick={startEdit}>
+                  Editează
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </BorderGlow>
     </div>
   );
 }
@@ -200,14 +286,16 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [platform, setPlatform] = useState({ anunt: null, termenLimita: null });
 
-  useEffect(() => {
+  function loadPlatform() {
     api.get("/api/admin/platform")
       .then(data => setPlatform(data))
       .catch(() => {});
-  }, []);
+  }
+
+  useEffect(() => { loadPlatform(); }, []);
 
   const zileRamase = (() => {
-    if (!platform.termenLimita) return 0;
+    if (!platform.termenLimita) return null;
     const limita = platform.termenLimita._seconds
       ? new Date(platform.termenLimita._seconds * 1000)
       : new Date(platform.termenLimita);
@@ -231,20 +319,22 @@ export default function DashboardPage() {
 
       {user.role === "student" && <StudentDashboard platform={platform} />}
       {user.role === "prof"    && <ProfDashboard    platform={platform} />}
-      {user.role === "admin"   && <AdminDashboard   platform={platform} />}
+      {user.role === "admin"   && <AdminDashboard   platform={platform} onPlatformUpdate={loadPlatform} />}
 
-      <div style={{ marginTop: "80px", marginBottom: "40px" }}>
-        <TrueFocus
-          sentence={`AU MAI RĂMAS|${zileRamase} ZILE`}
-          separator="|"
-          manualMode={false}
-          blurAmount={4}
-          borderColor="#1a8cff"
-          glowColor="rgba(26, 140, 255, 0.4)"
-          animationDuration={1.5}
-          pauseBetweenAnimations={3.5}
-        />
-      </div>
+      {zileRamase !== null && (
+        <div style={{ marginTop: "80px", marginBottom: "40px" }}>
+          <TrueFocus
+            sentence={`AU MAI RĂMAS|${zileRamase} ZILE`}
+            separator="|"
+            manualMode={false}
+            blurAmount={4}
+            borderColor="#1a8cff"
+            glowColor="rgba(26, 140, 255, 0.4)"
+            animationDuration={1.5}
+            pauseBetweenAnimations={3.5}
+          />
+        </div>
+      )}
     </div>
   );
 }
