@@ -15,6 +15,12 @@ VALID_STATUSES = {"APPROVED", "REJECTED", "NEEDS_CHANGES"}
 @jwt_required
 @role_required("prof")
 def update_status(thesis_id, section_id, version_id):
+    thesis_doc = db.collection("theses").document(thesis_id).get()
+    if not thesis_doc.exists:
+        return jsonify({"error": "Lucrare negasita"}), 404
+    if thesis_doc.to_dict().get("professorId") != g.user_id:
+        return jsonify({"error": "Acces interzis"}), 403
+
     version_ref = _get_version_ref(thesis_id, section_id, version_id)
     if not version_ref.get().exists:
         return jsonify({"error": "Versiune negasita"}), 404

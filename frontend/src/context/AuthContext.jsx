@@ -24,7 +24,6 @@ export function AuthProvider({ children }) {
         const profile = await api.post("/api/auth/register", {
           name: firebaseUser.displayName || firebaseUser.email.split("@")[0],
         });
-        // Forțează refresh token ca să preia custom claims actualizate
         await firebaseUser.getIdToken(true);
         const token = await firebaseUser.getIdTokenResult();
         setUser({
@@ -33,15 +32,16 @@ export function AuthProvider({ children }) {
           name:  profile.name || firebaseUser.displayName,
           role:  token.claims.role || profile.role || "pending",
         });
-        } catch {
-            const tokenFallback = await firebaseUser.getIdTokenResult();
-            setUser({
-              id:    firebaseUser.uid,
-              email: firebaseUser.email,
-              name:  firebaseUser.displayName,
-              role:  tokenFallback.claims.role || "pending",
-            });
-          }
+      } catch {
+        await firebaseUser.getIdToken(true);
+        const tokenFallback = await firebaseUser.getIdTokenResult();
+        setUser({
+          id:    firebaseUser.uid,
+          email: firebaseUser.email,
+          name:  firebaseUser.displayName,
+          role:  tokenFallback.claims.role || "pending",
+        });
+      }
       setLoading(false);
     });
     return unsub;

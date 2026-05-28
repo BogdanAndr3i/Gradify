@@ -19,13 +19,15 @@ def register():
     body = request.get_json() or {}
     name = body.get("name", "").strip() or g.email.split("@")[0]
 
+    now = datetime.utcnow()
     user_ref.set({
         "email": g.email,
         "name": name,
         "role": "pending",
         "facultate": None,
         "departament": None,
-        "createdAt": datetime.utcnow(),
+        "createdAt": now,
+        "updatedAt": now,
     })
 
     return jsonify({

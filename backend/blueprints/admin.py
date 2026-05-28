@@ -50,13 +50,23 @@ def approve_user(user_id):
 @jwt_required
 @role_required("prof", "admin")
 def get_students():
-    query = db.collection("users").where("role", "==", "student").stream()
-    result = []
-    for doc in query:
+    unassigned_only = request.args.get("unassigned", "").lower() == "true"
+
+    students = []
+    for doc in db.collection("users").where("role", "==", "student").stream():
         data = doc.to_dict()
         data["id"] = doc.id
-        result.append(data)
-    return jsonify(result), 200
+        students.append(data)
+
+    if unassigned_only:
+        assigned_ids = set()
+        for thesis in db.collection("theses").stream():
+            sid = thesis.to_dict().get("studentId")
+            if sid:
+                assigned_ids.add(sid)
+        students = [s for s in students if s["id"] not in assigned_ids]
+
+    return jsonify(students), 200
 
 
 # ── Platforma ─────────────────────────────────────────────────────────────────
