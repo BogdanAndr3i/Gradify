@@ -33,26 +33,24 @@ export default function UploadPage() {
   const [file,            setFile]            = useState(null);
   const [loading,         setLoading]         = useState(true);
   const [error,           setError]           = useState(null);
-
-  const [creatingNew,   setCreatingNew]   = useState(false);
-  const [newTitle,      setNewTitle]      = useState("");
-  const [savingSection, setSavingSection] = useState(false);
-
-  const [uploading, setUploading] = useState(false);
-  const [success,   setSuccess]   = useState(false);
+  const [creatingNew,     setCreatingNew]     = useState(false);
+  const [newTitle,        setNewTitle]        = useState("");
+  const [savingSection,   setSavingSection]   = useState(false);
+  const [uploading,       setUploading]       = useState(false);
+  const [success,         setSuccess]         = useState(false);
 
   async function loadSections(thesisId) {
     const secs = await api.get(`/api/theses/${thesisId}/sections`);
     setSections(secs);
-    // fetch latest version pentru fiecare sectiune
     const vMap = {};
     await Promise.all(secs.map(async (s) => {
       try {
         const versions = await api.get(`/api/theses/${thesisId}/sections/${s.id}/versions`);
         if (versions.length > 0) {
-          // sortare dupa versionNumber descendent
-          const latest = versions.sort((a, b) => b.versionNumber - a.versionNumber)[0];
-          vMap[s.id] = latest;
+          const sorted = versions.sort((a, b) => b.versionNumber - a.versionNumber);
+          const latest = sorted[0];
+          const withFeedback = sorted.find(v => v.feedbackGeneral && v.status !== "PENDING");
+          vMap[s.id] = { latest, withFeedback: withFeedback || null };
         }
       } catch {}
     }));
@@ -111,6 +109,15 @@ export default function UploadPage() {
     }
   };
 
+  const handleDownloadFeedback = async (versionId) => {
+    const { auth } = await import("../firebase");
+    const token = await auth.currentUser?.getIdToken();
+    const url = `https://gradify-497616.ew.r.appspot.com/api/theses/${thesis.id}/sections/${selectedSection.id}/versions/${versionId}/download`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const blob = await res.blob();
+    window.open(URL.createObjectURL(blob), "_blank");
+  };
+
   if (loading) return <div className="upload-container"><p>Se încarcă...</p></div>;
   if (error)   return <div className="upload-container"><p style={{ color: "red" }}>{error}</p></div>;
   if (!thesis) return (
@@ -123,7 +130,9 @@ export default function UploadPage() {
   );
 
   const canUpload = selectedSection && file && !uploading;
-  const selectedLatest = selectedSection ? latestVersions[selectedSection.id] : null;
+  const selectedEntry   = selectedSection ? latestVersions[selectedSection.id] : null;
+  const selectedLatest  = selectedEntry?.latest || null;
+  const selectedFeedback = selectedEntry?.withFeedback || null;
 
   return (
     <div className="upload-container">
@@ -143,8 +152,8 @@ export default function UploadPage() {
           <h3 className="section-picker__title">1. Selectează secțiunea</h3>
           <div className="section-chips">
             {sections.map(s => {
-              const latest = latestVersions[s.id];
-              const statusInfo = latest ? STATUS_CHIP[latest.status] : null;
+              const entry = latestVersions[s.id];
+              const statusInfo = entry?.latest ? STATUS_CHIP[entry.latest.status] : null;
               return (
                 <button
                   key={s.id}
@@ -171,7 +180,10 @@ export default function UploadPage() {
                   placeholder="Titlu secțiune (ex: Introducere)"
                   value={newTitle}
                   onChange={e => setNewTitle(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") handleCreateSection(); if (e.key === "Escape") { setCreatingNew(false); setNewTitle(""); } }}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") handleCreateSection();
+                    if (e.key === "Escape") { setCreatingNew(false); setNewTitle(""); }
+                  }}
                   disabled={savingSection}
                 />
                 <button className="btn-confirm-section" onClick={handleCreateSection} disabled={!newTitle.trim() || savingSection}>
@@ -186,25 +198,41 @@ export default function UploadPage() {
         </div>
       </BorderGlow>
 
-      {/* Feedback panel */}
-      {selectedLatest && selectedLatest.status !== "APPROVED" && (
-        <div className={`feedback-panel feedback-panel--${selectedLatest.status === "PENDING" ? "pending" : "rejected"}`}>
+      {selectedLatest && (
+        <div className={`feedback-panel feedback-panel--${
+          selectedLatest.status === "APPROVED" ? "approved" :
+          selectedLatest.status === "PENDING"  ? "pending"  : "rejected"
+        }`}>
           <div className="feedback-panel__header">
             <span className="feedback-panel__status">
               {STATUS_CHIP[selectedLatest.status]?.label || selectedLatest.status}
             </span>
             <span className="feedback-panel__version">Versiunea {selectedLatest.versionNumber}</span>
           </div>
-          {selectedLatest.feedbackGeneral ? (
+
+          {selectedFeedback && (
             <p className="feedback-panel__message">
-              <strong>Feedback profesor:</strong> {selectedLatest.feedbackGeneral}
+              <strong>Feedback profesor (V{selectedFeedback.versionNumber}):</strong> {selectedFeedback.feedbackGeneral}
             </p>
-          ) : (
+          )}
+
+          {!selectedFeedback && selectedLatest.status === "PENDING" && (
             <p className="feedback-panel__message feedback-panel__message--empty">
-              {selectedLatest.status === "PENDING"
-                ? "Secțiunea este în așteptare — profesorul nu a revizuit-o încă."
-                : "Profesorul nu a lăsat un mesaj suplimentar."}
+              Secțiunea este în așteptare — profesorul nu a revizuit-o încă.
             </p>
+          )}
+
+          {selectedFeedback && (
+            <a
+              className="feedback-panel__download"
+              href="#"
+              onClick={async (e) => {
+                e.preventDefault();
+                await handleDownloadFeedback(selectedFeedback.id);
+              }}
+            >
+              Vezi fișierul versiunii {selectedFeedback.versionNumber} →
+            </a>
           )}
         </div>
       )}

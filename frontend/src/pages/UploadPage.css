@@ -368,3 +368,19 @@
   color: #64748b;
   font-style: italic;
 }
+
+.feedback-panel--approved {
+  background: #f0fdf4;
+  border-color: #10b981;
+}
+.feedback-panel--approved .feedback-panel__status { color: #065f46; }
+
+.feedback-panel__download {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a8cff;
+  text-decoration: none;
+}
+.feedback-panel__download:hover { text-decoration: underline; }

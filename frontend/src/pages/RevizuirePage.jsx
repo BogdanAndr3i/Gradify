@@ -95,24 +95,17 @@ function VersionCard({ version, thesisId, sectionId, onStatusUpdate }) {
     }
   };
 
-  const saveFeedback = async () => {
-    if (!feedback.trim()) return;
-    setSaving(true);
-    try {
-      await api.post(
-        `/api/theses/${thesisId}/sections/${sectionId}/versions/${version.id}/feedback`,
-        { feedbackGeneral: feedback }
-      );
-    } catch (e) {
-      alert(e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
 
-  const setStatus = async (status) => {
+
+const setStatus = async (status) => {
     setSaving(true);
     try {
+      if (feedback.trim()) {
+        await api.post(
+          `/api/theses/${thesisId}/sections/${sectionId}/versions/${version.id}/feedback`,
+          { feedbackGeneral: feedback }
+        );
+      }
       await api.put(
         `/api/theses/${thesisId}/sections/${sectionId}/versions/${version.id}/status`,
         { status }
@@ -218,11 +211,6 @@ function VersionCard({ version, thesisId, sectionId, onStatusUpdate }) {
                 onChange={(e) => setFeedback(e.target.value)}
                 disabled={saving}
               />
-              <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-                <button className="btn-secondary" onClick={saveFeedback} disabled={saving || !feedback.trim()}>
-                  Salvează feedback
-                </button>
-              </div>
               <div className="decision-buttons">
                 <button className="btn-reject" onClick={() => setStatus("NEEDS_CHANGES")} disabled={saving}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -290,11 +278,11 @@ export default function RevizuirePage() {
   const toggleSection = (id) =>
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const handleStatusUpdate = (sectionId, versionId, newStatus) => {
+const handleStatusUpdate = (sectionId, versionId, newStatus, newFeedback) => {
     setVersions(prev => ({
       ...prev,
       [sectionId]: prev[sectionId].map(v =>
-        v.id === versionId ? { ...v, status: newStatus } : v
+        v.id === versionId ? { ...v, status: newStatus, feedbackGeneral: newFeedback || v.feedbackGeneral } : v
       ),
     }));
   };
